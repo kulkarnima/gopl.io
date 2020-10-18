@@ -9,6 +9,8 @@ import (
     "math"
     "math/rand"
     "net/http"
+    "os"
+    "strconv"
 )
 
 var palette = []color.Color{color.White, color.Black}
@@ -18,9 +20,9 @@ const (
     blackIndex = 1 // next color in palette
 )
 
-func lissajous(out io.Writer) {
+func lissajous(out io.Writer, cycles float64) {
     const (
-        cycles  = 5     // number of complex x oscillator revolutions
+     // cycles  = 5     // number of complex x oscillator revolutions
         res     = 0.001 // angular resolution
         size    = 100   // image canvas covers [-size..+size]
         nframes = 64    // number of animation frames
@@ -49,7 +51,17 @@ func lissajous(out io.Writer) {
 
 func main() {
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        lissajous(w)
+        if err := r.ParseForm(); err != nil {
+            log.Print(err)
+        }
+
+        cycles, err := strconv.ParseFloat(r.Form["cycles"][0], 64)
+        if err != nil {
+            log.Println("server4: can not parse cycle count!")
+            os.Exit(1)
+        }
+        lissajous(w, cycles)
     })
+
     log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
